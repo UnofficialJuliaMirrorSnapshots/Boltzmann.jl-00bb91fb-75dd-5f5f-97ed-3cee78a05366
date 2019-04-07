@@ -1,0 +1,29 @@
+language: julia
+os:
+  - osx
+  - linux
+julia:
+  - 1.0
+  - nightly
+notifications:
+  email: false
+addons:
+  apt:
+    packages:
+    - hdf5-tools
+matrix:
+  fast_finish: true
+  allow_failures:
+  - julia: nightly
+  exclude:
+  - julia: nightly
+    os: osx
+before_install:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+script:
+  - julia -e 'using Pkg; Pkg.init(); Pkg.clone(pwd())'
+  - export JULIA_TEST_GROUPS="unit integration"; julia -e 'using Pkg; Pkg.test("Boltzmann"; coverage=true)'
+  - export JULIA_TEST_GROUPS="acceptance"; julia -e 'using Pkg; Pkg.test("Boltzmann")'
+  #- export JULIA_TEST_GROUPS="benchmark"; julia -e 'using Pkg; Pkg.test("Boltzmann")'
+after_success:
+  - julia -e 'using Pkg; cd(Pkg.dir("Boltzmann")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
